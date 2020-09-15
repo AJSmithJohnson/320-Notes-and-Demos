@@ -1,0 +1,69 @@
+jsChat Protocol v1.0
+=========================
+
+All packets end with a \n (newline character) //so we don't know when a specific packet ends so we use a newline character
+//this prevents us from having newlines in our usernames and messages so we need to think about this
+
+All packets end with a \n(newline character)
+All packet parts are split with a \t (tab character)
+
+Features of app:
+-----------------
+send message
+sent usernames
+send private messages 
+list of online users
+mute (block) other users
+set your text color
+
+Packets from Client
+===================
+//First four characters represent packet type //we don't have to especially since we have the \t seperating info but best to keep convention that is set
+
+//we split our data packets whenever there is a tab character and the end of the packet is the newline character \n
+
+//This is the packet for just sending messages to the server
+//when a client wants to send a normal chat message they use this 
+CHAT\t(message)\n
+
+
+//This is a packet for a direct message sent to a single recipient
+DMSG\t(receipient)\t(message)\n
+
+
+//When the user submits a 'name change request'
+NAME\t(name)\n
+
+
+//A request for an updated list of users
+LIST\n
+
+
+
+Packets from Server
+==================\
+
+//when the server recieves a chat packet from a client,
+//it forwards it to everyone in the server
+CHAT\t(username)\t(message)\n
+
+//An annoucement from the server
+ANNC\t(message)\n
+
+
+//When the server recieves a name packet from a client and the name is accepted by the server
+the server sends out this packet type to the client
+NOKY\n
+
+//When the server recieves a name packet from a client and the name is NOT accepted by the server
+the server sends out this packet type to the client
+NBAD\t(message)\n
+
+
+//When the server recieves a DMSG packet from a client. it sends this packet to the recipient.
+NOKY\t(sender)\t(message)\n
+
+
+//THis packet contains a list of all users on the server\
+//THis packet should be sent out when a user: joins, disconnects, or changes their name
+LIST\t(user)\t(user) ...... \n
