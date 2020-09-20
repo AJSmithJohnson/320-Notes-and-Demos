@@ -1,5 +1,12 @@
 const net = require('net');
 
+
+//SO I think I have a pretty good handle on how my code flows
+//REMEMBER TO JUST READ THROUGH IT
+
+
+
+
 //our packet factory
 //represents our protocol
 const Packet = {
