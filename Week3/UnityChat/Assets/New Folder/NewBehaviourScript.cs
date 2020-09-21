@@ -132,8 +132,8 @@ public class NewBehaviourScript : MonoBehaviour
     public void UserDoneEditingMessage(string txt)
     {
 
-        
-        if (new Regex("^\\\\name ", RegexOptions.IgnoreCase).IsMatch(txt))
+
+        if (new Regex("^\\\\name", RegexOptions.IgnoreCase).IsMatch(txt))
         {
             //if user wants to change their name............
             string name = txt.Substring(6);
