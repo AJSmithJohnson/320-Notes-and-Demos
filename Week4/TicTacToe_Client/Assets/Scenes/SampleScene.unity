@@ -376,7 +376,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 304778400}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1485468284}
+        m_TargetAssemblyTypeName: ControllerGameClient, Assembly-CSharp
+        m_MethodName: OnButtonConnect
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &304778400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -433,7 +445,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &418797327
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1288,7 +1300,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &766669155
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2211,6 +2223,7 @@ GameObject:
   - component: {fileID: 1485468282}
   - component: {fileID: 1485468281}
   - component: {fileID: 1485468280}
+  - component: {fileID: 1485468284}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2300,6 +2313,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1485468284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1485468279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41cc26f371de81f4481acb6c8b4705ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputHost: {fileID: 1502274417}
+  inputPort: {fileID: 715419938}
+  panelHostDetails: {fileID: 766669155}
+  panelUsername: {fileID: 1601774287}
+  panelGameplay: {fileID: 418797327}
 --- !u!1 &1502274415
 GameObject:
   m_ObjectHideFlags: 0
