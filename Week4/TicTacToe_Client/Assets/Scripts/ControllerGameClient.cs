@@ -8,15 +8,15 @@ using System;
 
 public class ControllerGameClient : MonoBehaviour
 {
-    static ControllerGameClient singleTon;
+    static public ControllerGameClient singleTon;
     TcpClient socket = new TcpClient();
     Buffer buffer = Buffer.Alloc(0);
     public TMP_InputField inputHost;
     public TMP_InputField inputPort;
-
+    public TMP_InputField inputUsername;
     public Transform panelHostDetails;
     public Transform panelUsername;
-    public Transform panelGameplay;
+    public ControllerGameplay panelGameplay;
     // Start is called before the first frame update
     void Start()
     {
@@ -28,6 +28,11 @@ public class ControllerGameClient : MonoBehaviour
         {
             singleTon = this;
             DontDestroyOnLoad(gameObject);//don't destroy this wehn we load a new scene otherwise we will loose this game object
+
+            //show connection screen
+            panelHostDetails.gameObject.SetActive(true);
+            panelUsername.gameObject.SetActive(false);
+            panelGameplay.gameObject.SetActive(false);
         }
 
         //test Buffer class;
@@ -53,17 +58,38 @@ public class ControllerGameClient : MonoBehaviour
         TryToConnect(host, port);
     }
 
+    public void OnButtonUsername()
+    {
+        string user = inputUsername.text;
+
+        Buffer packet = PacketBuilder.Join(user);
+        print(packet);
+        SendPacketToServer(packet);
+
+
+    }
+
+
     async public void TryToConnect(string host, int port)
     {
         if (socket.Connected) return;//already connected to a server backs out
         try
         {
             await socket.ConnectAsync(host, port);
+
+            panelHostDetails.gameObject.SetActive(false);
+            panelUsername.gameObject.SetActive(true);
+            panelGameplay.gameObject.SetActive(false);
+
             StartReceivingPackets();
         }
         catch(Exception e)
         {
             print("FAILED TO CONNECT OH NOOOOOOOOOOOO" + e.ToString());
+
+            panelHostDetails.gameObject.SetActive(true);
+            panelUsername.gameObject.SetActive(false);
+            panelGameplay.gameObject.SetActive(false);
         }
         
     }
@@ -114,6 +140,11 @@ public class ControllerGameClient : MonoBehaviour
                     panelHostDetails.gameObject.SetActive(false);
                     panelUsername.gameObject.SetActive(false);
                     panelGameplay.gameObject.SetActive(true);
+                }else if(joinResponse == 9)
+                {
+                    panelHostDetails.gameObject.SetActive(true);
+                    panelUsername.gameObject.SetActive(false);
+                    panelGameplay.gameObject.SetActive(false);
                 }
                 else
                 {
@@ -123,6 +154,7 @@ public class ControllerGameClient : MonoBehaviour
                     panelHostDetails.gameObject.SetActive(false);
                     panelUsername.gameObject.SetActive(true);
                     panelGameplay.gameObject.SetActive(false);
+                    print(joinResponse);
                 }
                 
                 //TODO: REMOVE 5 bites from buffer or CONSUME DATA FROM BUFFER
@@ -142,11 +174,10 @@ public class ControllerGameClient : MonoBehaviour
                 panelHostDetails.gameObject.SetActive(false);
                 panelUsername.gameObject.SetActive(false);
                 panelGameplay.gameObject.SetActive(true);
-                //TODO: update all of the interface to reflect game state
-                //whose turn
-                //the 9 spaces on the board
-                //status of the game
-                //TODO: CONSUME DATA
+                
+                panelGameplay.UpdateFromServer(gameStatus, whoseTurn, spaces);
+                
+                
                 buffer.Consume(15);
                 break;
             case "CHAT":
@@ -176,5 +207,17 @@ public class ControllerGameClient : MonoBehaviour
                 break;
 
         }
+    }
+
+    async public void SendPacketToServer(Buffer packet)
+    {
+        if (!socket.Connected) return; //we want to leave because we aren't connected to the server//We could maybe make this a bool that returns false if we are not connected
+        await socket.GetStream().WriteAsync(packet.bytes, 0, packet.bytes.Length);
+    }
+
+    public void SendPlayPacket(int x, int y)
+    {
+        SendPacketToServer(PacketBuilder.Play(x, y));
+        
     }
 }

@@ -48,14 +48,26 @@ public class ControllerGameplay : MonoBehaviour
 
     void ButtonClicked(ButtonXO bttn)
     {
-
+        
         //print("A BUTTON WAS CLICKED");
         print($"a button was clicked{bttn.pos}");
+        ControllerGameClient.singleTon.SendPlayPacket(bttn.pos.X, bttn.pos.Y);
     }
 
-    // Update is called once per frame
-    void Update()
+   
+    // 0 1 2
+    // 3 4 5
+    // 6 7 8
+    internal void UpdateFromServer(byte gameStatus, byte whoseTurn, byte[] spaces)
     {
-        
+        //Empty messages actually slow game down is recommended you remove them
+        for (int i = 0; i < spaces.Length; i++)
+        {
+            byte b = spaces[i];
+            int y = i / 3;
+            int x = i % 3;
+
+            boardUI[x, y].SetOwner(b);
+        }
     }
 }

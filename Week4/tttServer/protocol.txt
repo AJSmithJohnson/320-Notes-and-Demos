@@ -1,6 +1,6 @@
 TicTacToe Protocol (TTTP) V1.0
 
-ALL MULTIBYTE VALUES STORED USING BIG ENDIAN
+ALL MULTIBYTE VALUES STORED USING BIG ENDIAN\
 ===================================
 
 

@@ -1,4 +1,4 @@
-
+const PacketBuilder = require("./packet-build.js").PacketBuilder;
 
 exports.Client = class Client {
 	constructor(sock, server){
@@ -8,9 +8,9 @@ exports.Client = class Client {
 
 		this.buffer = Buffer.alloc(0);
 
-		this.socket.on("error", (e)=>{this.onError(e)});
-		this.socket.on("close", ()=>{this.onClose()});
-		this.socket.on("data", (d)=>{this.onData(d)});
+		this.socket.on('error', (e)=>{this.onError(e)});
+		this.socket.on('close', ()=>{this.onClose()});
+		this.socket.on('data', (d)=>{this.onData(d)});
 	}
 
 	onError(errMsg){
@@ -18,10 +18,14 @@ exports.Client = class Client {
 	}
 
 	onClose(){
+
 		this.server.onClientDisconnect(this);
 	}
 
 	onData(data){
+
+		//console.log("Packet received:" + data);
+
 		//add new data to buffer:
 		this.buffer = Buffer.concat([this.buffer, data]);
 		//console.log(this.buffer);
@@ -37,18 +41,35 @@ exports.Client = class Client {
 
         		if(this.buffer.length < 5) return; //not enough data to process
         		const lengthOfUsername = this.buffer.readUInt8(4);//offsetting by four so we can read the fifth bytes
-        		console.log(this.buffer);
+        		//console.log(this.buffer);//don't need all these redundant logsssss
         		if(this.buffer.length < 5 + lengthOfUsername) return; //not enough data to process
         		const desiredUsername = this.buffer.slice(5, 5+lengthOfUsername).toString();//start at 6 and then slice out from the length of username to take username from buffer
 
         		//check username
+        		let responseType = this.server.generateResponseID(desiredUsername, this);
+
+        		
+        		
+
+        		// consume data out of the buffer:
+        		this.buffer = this.buffer.slice(5 + lengthOfUsername);
+
+				const packet = PacketBuilder.join(responseType);
+        		this.sendPacket(packet);
+        		const packet2 = PacketBuilder.update(this.server.game);
         		console.log("User wants to change name: " +desiredUsername+ "' ");
         		break;
         	case "CHAT": 
 
         		break;
         	case "PLAY": 
+        			if(this.buffer.length < 6) return; //not enough data
+        			const x = this.buffer.readUInt8(4);
+        			const y = this.buffer.readUInt8(5);
 
+        			console.log("User wants to play: " + x + " " + y);
+        			this.buffer.slice(6);
+        			this.server.game.PlayMove(this, x,y);
         		break;
         	default: 
 
@@ -58,5 +79,8 @@ exports.Client = class Client {
         		break;
         }
 		//process packets ( and consume data from buffer)
+	}
+	sendPacket(packet){
+		this.socket.write(packet);
 	}
 };

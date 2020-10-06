@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -25,9 +27,10 @@ public struct GridPOS
 public class ButtonXO : MonoBehaviour
 {
     public GridPOS pos;
-
+    public TextMeshProUGUI textField;
     public void Init(GridPOS pos, UnityAction callback)
     {
+        
         this.pos = pos;
         Button bttn = GetComponent<Button>();
         //bttn.onClick.AddListener(new UnityEngine.Events.UnityAction(ButtonClicked));//Traditional way to do it
@@ -43,5 +46,12 @@ public class ButtonXO : MonoBehaviour
     public void ButtonClicked()
     {
         print("I have been clicked");
+    }
+
+    public void SetOwner(byte b)
+    {
+        if (b == 0) textField.text = "";
+        if (b == 1) textField.text = "X";
+        if (b == 2) textField.text = "O";
     }
 }
