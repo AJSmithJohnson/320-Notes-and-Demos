@@ -17,6 +17,8 @@ public class ControllerGameClient : MonoBehaviour
     public Transform panelHostDetails;
     public Transform panelUsername;
     public ControllerGameplay panelGameplay;
+    
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -50,7 +52,7 @@ public class ControllerGameClient : MonoBehaviour
        
 
     }
-
+   
     public void OnButtonConnect()
     {
         string host = inputHost.text;
