@@ -1,0 +1,31 @@
+TCP = transmition control protocol
+	Gurentees every packet you send arrives
+	Every packet arrives in order
+	Sends extra packets in the background to make sure packets are recieved
+UDP = user datagram protocol
+	Doesn't make gurentees that packet will get to destination 
+
+
+
+For Certain types of applications where you want speed you should switch to UDP. Technically the packets aren't moving faster but because we are sending fewer packets
+we can potentially send more info in the same amount of time.
+
+Difference between latency and bandwidth
+Bandwidth is the amount of info sent
+
+
+
+
+///
+in TCP there were multiple pieces that could be grouped together we had to create a buffer and a new packet would come in. In buffer we would look for 
+complete packets and pull them out
+
+in udp when you recieve a discrete message you just process it and then that's it. You either get the message or you don't. We don't need to worry about
+consuming bytes or anything
+
+
+
+//state in boardgames tends to change more slowly
+//with a boardgame you don't need to worry about realtime
+//if you read enough books on multiplayer programming
+	//real time games often have to be percieved as if they are turn based//a turn has to be a 60h of a second

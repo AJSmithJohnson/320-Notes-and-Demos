@@ -1,0 +1,35 @@
+//Protocol defines how we build our code
+Building a protocol is a core objective
+
+Game Demo Protocol
+
+
+Packets from Client
+=====================
+
+JOIN - sent when joining the game, this packet should "register the player" (request) we won't cover the response for this demo
+	O 	L	Datatype	DESC
+	========================
+	0	4	ascii		"JOIN"
+
+INPT - Current State of the client's input from the player.
+
+	O  L  	Datatype    DESC
+	=========================
+	0  4    ascii 		"INPT"
+	4  1    int8 		direction of horizontal input (is -1, 0, 1)
+	
+
+
+Packets From Server
+=======================
+
+BALL - update of balls position. Sent 60 times per second().
+
+	O 	L 	Datatype	Desc
+	=============================
+	0	4	ascii		"BALL"
+	4  	4   uint32 		frame-number
+	8	4	float 		x position
+	12 	4 	float 		y position
+	16 	4 	float 		z position
