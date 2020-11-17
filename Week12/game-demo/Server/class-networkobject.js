@@ -6,6 +6,9 @@ exports.NetworkObject = class NetworkObject{
 
 
 	constructor(){
+
+		this.classID = "NWOB";
+
 		this.networkID = ++NetworkObject._idCount;//before we assign this individual objects network ID
 		//we access the static property and increment it
 
