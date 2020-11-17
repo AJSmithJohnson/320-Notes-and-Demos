@@ -5,6 +5,14 @@ exports.Pawn = class Pawn extends NetworkObject{
 		super();//calls the superclasses constructor//which in this case is the one on the class-networkObject
 		this.classID = "PAWN";
 	}
+	serialize(){
+		
+
+		//\super.serialize();
+	}
+	deserialize(){
+		//TODO
+	}
 
 }
 

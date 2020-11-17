@@ -7,6 +7,9 @@ using System.Reflection;
 public delegate NetworkObject SpawnDelegate();
 static public class ObjectRegistry 
 {
+    //Reflection is code that lets you pull apart the code base itself
+    //reflection classes are all about letting you pull apart all the functions and classes and stuff inside of it
+    
     static private Dictionary<string, Type> registeredTypes = new Dictionary<string, Type>();
 
     static public void RegisterAll()

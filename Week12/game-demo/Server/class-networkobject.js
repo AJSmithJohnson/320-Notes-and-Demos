@@ -13,5 +13,12 @@ exports.NetworkObject = class NetworkObject{
 		//we access the static property and increment it
 
 	}
+
+	serialize(){
+		//TODO
+	}
+	deserialize(){
+		//TODO
+	}
 }
 
