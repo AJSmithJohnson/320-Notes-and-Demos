@@ -5,8 +5,15 @@ exports.Pawn = class Pawn extends NetworkObject{
 		super();//calls the superclasses constructor//which in this case is the one on the class-networkObject
 		this.classID = "PAWN";
 	}
+	update(game){
+		this.position.x = Math.sin(game.time);
+		console.log(this.position.x);
+	}
 	serialize(){
-		
+		const b = super.serialize();
+
+		//Here we would add additional bytes that are needed for our pawn
+		return b;
 
 		//\super.serialize();
 	}
@@ -16,10 +23,3 @@ exports.Pawn = class Pawn extends NetworkObject{
 
 }
 
-new exports.Pawn();
-new exports.Pawn();
-new exports.Pawn();
-new exports.Pawn();
-new exports.Pawn();
-const p = new exports.Pawn();
-console.log(p);

@@ -64,6 +64,9 @@ exports.Server = class Server {
 
 		this.showClientList();
 
+		const packet = this.game.makeREPL(false);
+		this.sendPacketToClient(packet, client);//TODO: needs to acknowledge
+		
 		// may or may not be appropriate place to trigger sending replication packets
 		//TODO: send CREATE replication packets to client for every object....
 		return client;

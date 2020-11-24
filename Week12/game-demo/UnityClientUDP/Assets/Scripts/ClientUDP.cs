@@ -36,12 +36,12 @@ public class ClientUDP : MonoBehaviour
         else
         {
             singleton = this;
+            DontDestroyOnLoad(gameObject);
 
-            ObjectRegistry.RegisterAll();
+            //NetworkObject obj = ObjectRegistry.SpawnFrom("PLYR");
+            //NetworkObject obj = ObjectRegistry.SpawnFrom("PAWN");
 
-            NetworkObject obj = ObjectRegistry.SpawnFrom("PAWN");
-
-            print(obj);
+            //print(obj);
 
             //set up receive loop (async)
             ListenForPackets();
@@ -94,26 +94,77 @@ public class ClientUDP : MonoBehaviour
         string id = packet.ReadString(0, 4); //we read a string from location 0 and the first four bytes
         switch(id)
         {
-            case "BALL":
-                //REMEMBER WE ARE USING BIG ENDIEN ON THE SERVER AND LITTLE ENDIEN HERE BECUASE THE WAY WE PROCESS ENDIAN PACKETS HERE HAS A PROBLEM
-                if (packet.Length < 20) return; // do nothing, we don't have enough info to use
-                uint packetNum = packet.ReadUInt32BE(4);
-                if(packetNum < ackBallupdate)
-                {
-                    return;//ignore packet because it's olllllldddddd
-                }
-                ackBallupdate = packetNum;
-                print(ackBallupdate);
-                float x =packet.ReadSingleBE(8);//calls em singles instead of floats
-                float y = packet.ReadSingleBE(12);//calls em singles instead of floats
-                float z = packet.ReadSingleBE(16);//calls em singles instead of floats
-
-                ball.position = new Vector3(x, y, z);
-               // print(x);
-                //packet.Consume(16); //we don't need to consume the packets in udp
+            case "REPL":
+                ProcessPacketREPL(packet);
+                
                 break;
-        }
+        }//end of switch(id)
 
+    }//end of void ProcessPacket
+
+    private  void ProcessPacketREPL(Buffer packet)
+    {
+        if (packet.Length < 5) return; //do nothing becuase there isn't enough info to use
+        int replType = packet.ReadUInt8(4);
+        if (replType != 1 && replType != 2 && replType != 3) return;//DO NOTHING not a valid packet we can process
+        int offset = 5;
+        while (offset <= packet.Length)
+        {
+            if (packet.Length < offset + 5) return; //do nothing becuase there isn't enough info to use
+
+            
+            int networkID = packet.ReadUInt8(offset + 4);
+           // print(packet);
+            switch (replType)
+            {
+                case 1: //create
+
+                    //print("REPL packet CREATE received....");
+
+                    string classID = packet.ReadString(offset, 4);
+                    
+                    NetworkObject obj = ObjectRegistry.SpawnFrom(classID);
+                    if (obj == null) return;//ERROR: Class ID is not found
+                    offset += 4;//trim out classID off beginning of packet data
+                    
+                    
+                    
+                    offset += obj.Deserialize(packet.Slice(offset));
+
+                    NetworkObject.AddObject(obj);
+                    break;
+                case 2: //update
+
+                    //lookup the object using the network ID
+                    
+
+                    NetworkObject obj2 = NetworkObject.GetObjectByNetworkID(networkID);
+
+                    if (obj2 == null) return;
+                    print(obj2);
+                        offset += 4;//trim out classID off beginning of packet data
+                        offset += obj2.Deserialize(packet.Slice(offset));
+                    
+                    
+                        
+                    
+                    break;
+                case 3: //delete
+
+                    NetworkObject obj3 = NetworkObject.GetObjectByNetworkID(networkID);
+                    if (obj3 == null) return;
+
+                    NetworkObject.RemoveObject(networkID);
+
+                    Destroy(obj3.gameObject);
+
+                    break;
+                default: //??
+                    break;
+            }//End of nested switch
+
+            //break;//no looping yet
+        }//ENd of whileTrue
     }
 
     async public void SendPacket(Buffer packet)//takes a packet and sends it //made public so we can access it from packetBuilder
