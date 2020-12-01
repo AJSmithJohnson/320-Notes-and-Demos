@@ -1,18 +1,24 @@
 
-const Pawn = require("./class-pawn.js").Pawn;
+
 
 exports.Game = class Game{
+
+	static Singleton;
+
 	constructor(server){
+		Game.Singleton = this;
 		this.frame = 0;
 		this.time = 0;
-		this.dt = 16 / 1000; //this is deltaTime in seconds
+		this.dt = .016; //this is deltaTime in seconds
 		this.timeUntilNextStatePacket = 0;
 		this.objs = [];//store Network Objects
+
+		
 
 		this.server = server;
 		this.update();
 
-		this.spawnObject(new Pawn() );//should be in server when player joins
+		//this.spawnObject(new Pawn() );//should be in server when player joins
 	}//end of constructor
 	update(){
 		//Server needs to be authoritative
@@ -20,6 +26,9 @@ exports.Game = class Game{
 		//in unity we are going to have a ball and the server is going to move the ball back and forth
 		this.time += this.dt;
 		this.frame++;
+
+		this.server.update(this);//check clients for disconnects, etc.\
+
 		//this.ballPos.x = Math.sin(this.time) * 2;
 		const player = this.server.getPlayer(0);//return nth client
 
@@ -73,7 +82,7 @@ exports.Game = class Game{
 		return packet;
 	}
 
-	spawnObject(obj){
+	spawnObject(obj){//INSTANTIATE()
 		this.objs.push(obj);
 		
 		let packet = Buffer.alloc(5);//we allocate 16 bytes of memory
@@ -89,5 +98,18 @@ exports.Game = class Game{
 			this.server.sendPacketToAll(packet);
 		
 	}//end of spawnObject
+	removeObject(obj){//DESTROY()
+		const index = this.objs.indexOf(obj);
+		if(index < 0) return;
+		const netID = this.objs[index].networkID; //get id of object
+		this.objs.splice(index, 1);// remove object from array
+
+		const packet = Buffer.alloc(6);
+		packet.write("REPL", 0);
+		packet.writeUInt8(3, 4);//writting 3 four bytes into the packet; 3 means delete
+		packet.writeUInt8(netID, 5);
+
+		this.server.sendPacketToAll(packet);
+	}
 
 }//End of game class

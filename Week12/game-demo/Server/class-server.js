@@ -1,7 +1,7 @@
-const Game = require("./class-game.js").Game;//We create a variable called game require the exported object and inside of it look for an object called game
-
+//We create a variable called game require the exported object and inside of it look for an object called game
+const Pawn = require("./class-pawn.js").Pawn;
 const Client = require("./class-client.js").Client;//
-
+const Game = require("./class-game.js").Game;
 //exports keyword stores server object in this class and allows us to use it in other files
 exports.Server = class Server {
 	constructor(){
@@ -16,7 +16,7 @@ exports.Server = class Server {
 
 		this.sock.on("listening", ()=>this.onStartListen());
 		this.game = new Game(this);
-
+		//this.game.spawnObject( new Pawn());
 		this.sock.on("message", (msg, rinfo)=>this.onPacket(msg, rinfo));
 		//start listening:
 		this.port = 320;
@@ -36,7 +36,7 @@ exports.Server = class Server {
 		
         const c = this.lookupClient(rinfo);
         if(c){//If client exists then handle packet
-        	c.onPacket(msg);
+        	c.onPacket(msg, this.game);
         }else {//We don't have a client CREATE THEM 
 			if(packetID == "JOIN"){
 				this.makeClient(rinfo);
@@ -61,16 +61,31 @@ exports.Server = class Server {
 		const key = this.getKeyFromRinfo(rinfo);
 		const client = new Client(rinfo);
 		this.clients[key] = client;
+		//depending on scene (and other conditions) spawn Pawn:
+		client.spawnPawn(this.game);
+
+		//this.clients[key] = client;//I commented this out because the above thing is the same thing I think
 
 		this.showClientList();
 
 		const packet = this.game.makeREPL(false);
 		this.sendPacketToClient(packet, client);//TODO: needs to acknowledge
 		
+
+		const packet2 = Buffer.alloc(5);
+		packet2.write("PAWN", 0);
+		packet2.writeUInt8(client.networkID, 4); 
+		this.sendPacketToClient(packet2, client);
 		// may or may not be appropriate place to trigger sending replication packets
 		//TODO: send CREATE replication packets to client for every object....
 		return client;
 	}//End of makeClient
+	disconnectClient(client){
+		if(client.pawn)this.game.removeObject(client.pawn);
+		const key = this.getKeyFromRinfo(client.rinfo);
+		delete this.clients[key];
+		
+	}
 	showClientList(){
 		console.log(" =========="+Object.keys(this.clients).length+"clients connected ========== "); //associative arrays are tricky we need the 
 		//Object.keys function to get the number of items in an associative array
@@ -106,7 +121,12 @@ exports.Server = class Server {
 	sendPacketToClient(packet, client){
 		this.sock.send(packet, 0, packet.length, client.rinfo.port, client.rinfo.address, ()=>{} );
 	} 
-
+	update(game){
+		// check clients for disconnects, etc.
+		for(let key in this.clients){
+			this.clients[key].update(game);
+		}
+	}
 }//End of server class
 
 

@@ -15,7 +15,8 @@ public class ClientUDP : MonoBehaviour
         private set { _singleton = value; }
 
     }
-
+    public string ServerHOST = "127.0.0.1";
+    public ushort ServerPORT = 320;
     //is possible to instantiate sock with address and port if needed
     UdpClient sock = new UdpClient();//create a client called scok    //instantiate it in line
 
@@ -40,7 +41,9 @@ public class ClientUDP : MonoBehaviour
 
             //NetworkObject obj = ObjectRegistry.SpawnFrom("PLYR");
             //NetworkObject obj = ObjectRegistry.SpawnFrom("PAWN");
-
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(ServerHOST), ServerPORT);
+            sock = new UdpClient(ep.AddressFamily);
+            sock.Connect(ep);
             //print(obj);
 
             //set up receive loop (async)
@@ -53,7 +56,7 @@ public class ClientUDP : MonoBehaviour
           
     }
 
-
+  
     /// <summary>
     /// This function listens for incoming UDP packets
     /// </summary>
@@ -98,6 +101,18 @@ public class ClientUDP : MonoBehaviour
                 ProcessPacketREPL(packet);
                 
                 break;
+            case "PAWN":
+                if (packet.Length < 5) return;
+
+                byte networkID = packet.ReadUInt8(4);
+                NetworkObject obj = NetworkObject.GetObjectByNetworkID(networkID);
+                if (obj)
+                {
+                    //Pawn p = (obj as Pawn);
+                    Pawn p = (Pawn)obj;
+                    if (p != null) p.canPlayerControl = true;
+                }
+                break;
         }//end of switch(id)
 
     }//end of void ProcessPacket
@@ -110,19 +125,24 @@ public class ClientUDP : MonoBehaviour
         int offset = 5;
         while (offset <= packet.Length)
         {
-            if (packet.Length < offset + 5) return; //do nothing becuase there isn't enough info to use
+           // if (packet.Length < offset + 5) return; //do nothing becuase there isn't enough info to use
 
             
-            int networkID = packet.ReadUInt8(offset + 4);
+            int networkID = 0;
            // print(packet);
             switch (replType)
             {
                 case 1: //create
-
+                    if (packet.Length < offset + 5) return;
+                    networkID = packet.ReadUInt8(offset + 4);
                     //print("REPL packet CREATE received....");
 
                     string classID = packet.ReadString(offset, 4);
-                    
+
+                    //Check network ID!
+                    if(NetworkObject.GetObjectByNetworkID(networkID) != null) return;
+
+
                     NetworkObject obj = ObjectRegistry.SpawnFrom(classID);
                     if (obj == null) return;//ERROR: Class ID is not found
                     offset += 4;//trim out classID off beginning of packet data
@@ -134,9 +154,10 @@ public class ClientUDP : MonoBehaviour
                     NetworkObject.AddObject(obj);
                     break;
                 case 2: //update
-
+                    if (packet.Length < offset + 5) return;
+                    networkID = packet.ReadUInt8(offset + 4);
                     //lookup the object using the network ID
-                    
+
 
                     NetworkObject obj2 = NetworkObject.GetObjectByNetworkID(networkID);
 
@@ -150,14 +171,16 @@ public class ClientUDP : MonoBehaviour
                     
                     break;
                 case 3: //delete
-
+                    print("WHAT");
+                    if (packet.Length < offset) return;
+                    networkID = packet.ReadUInt8(offset);
                     NetworkObject obj3 = NetworkObject.GetObjectByNetworkID(networkID);
                     if (obj3 == null) return;
 
                     NetworkObject.RemoveObject(networkID);
 
                     Destroy(obj3.gameObject);
-
+                    offset++;
                     break;
                 default: //??
                     break;
@@ -170,10 +193,11 @@ public class ClientUDP : MonoBehaviour
     async public void SendPacket(Buffer packet)//takes a packet and sends it //made public so we can access it from packetBuilder
     {
         if (sock == null) return;
+        if (!sock.Client.Connected) return;
         
         //TODO: Extract server and port into seperate variables
         //Buffer packet = Buffer.From("HELLO WORLD!");//should probably store IP and port somewhere else in code
-        await sock.SendAsync(packet.bytes, packet.bytes.Length, "127.0.0.1", 320);
+        await sock.SendAsync(packet.bytes, packet.bytes.Length);
     }
     
     void Update()
