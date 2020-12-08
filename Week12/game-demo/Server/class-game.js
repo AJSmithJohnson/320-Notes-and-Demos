@@ -10,7 +10,7 @@ exports.Game = class Game{
 		this.frame = 0;
 		this.time = 0;
 		this.dt = .016; //this is deltaTime in seconds
-		this.timeUntilNextStatePacket = 0;
+		this.timeUntilNextStatePacket = 5;
 		this.objs = [];//store Network Objects
 
 		

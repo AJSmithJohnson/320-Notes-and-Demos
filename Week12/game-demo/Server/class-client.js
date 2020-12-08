@@ -21,7 +21,7 @@ exports.Client = class Client{
 		this.pawn = new Pawn(); //set up pawn variable and reference
 		game.spawnObject( this.pawn );//Add pawn to game world
 
-		\
+		
 	}
 
 	update(game){

@@ -15,11 +15,12 @@ public class ClientUDP : MonoBehaviour
         private set { _singleton = value; }
 
     }
-    public string ServerHOST = "127.0.0.1";
-    public ushort ServerPORT = 320;
+   
     //is possible to instantiate sock with address and port if needed
-    UdpClient sock = new UdpClient();//create a client called scok    //instantiate it in line
+    static UdpClient sockSending = new UdpClient();//create a client called scok    //instantiate it in line
+    static UdpClient sockReceive = new UdpClient(321);
 
+    public List<RemoteServer> availableGameServers = new List<RemoteServer>();
     /// <summary>
     /// Most recent ball update packet
     /// that has been recieved
@@ -39,30 +40,38 @@ public class ClientUDP : MonoBehaviour
             singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            //NetworkObject obj = ObjectRegistry.SpawnFrom("PLYR");
-            //NetworkObject obj = ObjectRegistry.SpawnFrom("PAWN");
-            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(ServerHOST), ServerPORT);
-            sock = new UdpClient(ep.AddressFamily);
-            sock.Connect(ep);
-            //print(obj);
-
-            //set up receive loop (async)
             ListenForPackets();
-            //send a packet to the server(async);
-            SendPacket(Buffer.From("JOIN"));
+            
         }
-        
-        
-          
+
+
+
     }
 
-  
+    public void ConnectToServer(string host, ushort port)
+    {
+        //TODO: don't do anything if connected 
+
+        //NetworkObject obj = ObjectRegistry.SpawnFrom("PLYR");
+        //NetworkObject obj = ObjectRegistry.SpawnFrom("PAWN");
+        IPEndPoint ep = new IPEndPoint(IPAddress.Parse(host), port);
+        sockSending = new UdpClient(ep.AddressFamily);
+        sockSending.Connect(ep);
+        //print(obj);
+
+        //set up receive loop (async)
+        //ListenForPackets();
+        //send a packet to the server(async);
+        SendPacket(Buffer.From("JOIN"));
+    }
+
+
     /// <summary>
     /// This function listens for incoming UDP packets
     /// </summary>
     async void ListenForPackets()
     {
-
+        //sockReceive = new UdpClient(321);
         while(true)
         {
             UdpReceiveResult res;
@@ -71,13 +80,14 @@ public class ClientUDP : MonoBehaviour
 
 
                 //could use Var res //put cursor in var, ctrl+period, then use explicit datatype to have IDE change it for you
-                 res = await sock.ReceiveAsync();//create the res object
-                Buffer packet = Buffer.From(res.Buffer); //Buffer from is going to take the res object and give us a packet we can process. 
+                 res = await sockReceive.ReceiveAsync();//create the res object
+                
 
-                ProcessPacket(packet);
+                ProcessPacket(res);
             }
             catch
             {
+                print("fail");
                 break;
             }
 
@@ -91,8 +101,11 @@ public class ClientUDP : MonoBehaviour
     /// This function processes a packet and decides what to do next
     /// </summary>
     /// <param name="packet">the packet to process</param>
-     void ProcessPacket(Buffer packet)
+     void ProcessPacket(UdpReceiveResult res)
     {
+        Buffer packet = Buffer.From(res.Buffer); //Buffer from is going to take the res object and give us a packet we can process. 
+
+        IPAddress sender = res.RemoteEndPoint.Address;
         if (packet.Length < 4) return; //do nothing becuase there isn't enough info to use
         string id = packet.ReadString(0, 4); //we read a string from location 0 and the first four bytes
         switch(id)
@@ -101,7 +114,7 @@ public class ClientUDP : MonoBehaviour
                 ProcessPacketREPL(packet);
                 
                 break;
-            case "PAWN":
+            case "PAWN":// just indicates to player which object(Network ID) they control 
                 if (packet.Length < 5) return;
 
                 byte networkID = packet.ReadUInt8(4);
@@ -113,9 +126,30 @@ public class ClientUDP : MonoBehaviour
                     if (p != null) p.canPlayerControl = true;
                 }
                 break;
+            case "HOST":
+                if (packet.Length < 7) return;
+                ushort port = packet.ReadUInt16BE();
+                int nameLength = packet.ReadUInt8(6);
+
+                if (packet.Length < 7 + nameLength) return;//do nothing
+                string name = packet.ReadString(7, nameLength);
+                AddToServerList(new RemoteServer(res.RemoteEndPoint, name));
+                break;
         }//end of switch(id)
 
     }//end of void ProcessPacket
+
+    private void AddToServerList(RemoteServer server)
+    {
+        //check if exists
+        if (!availableGameServers.Contains(server))
+        {
+            //add
+            availableGameServers.Add(server);
+        }
+
+        print(availableGameServers.Count);
+    }
 
     private  void ProcessPacketREPL(Buffer packet)
     {
@@ -192,12 +226,12 @@ public class ClientUDP : MonoBehaviour
 
     async public void SendPacket(Buffer packet)//takes a packet and sends it //made public so we can access it from packetBuilder
     {
-        if (sock == null) return;
-        if (!sock.Client.Connected) return;
+        if (sockSending == null) return;
+        if (!sockSending.Client.Connected) return;
         
         //TODO: Extract server and port into seperate variables
         //Buffer packet = Buffer.From("HELLO WORLD!");//should probably store IP and port somewhere else in code
-        await sock.SendAsync(packet.bytes, packet.bytes.Length);
+        await sockSending.SendAsync(packet.bytes, packet.bytes.Length);
     }
     
     void Update()
@@ -210,6 +244,8 @@ public class ClientUDP : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        sock.Close();//after we call on destory our loop is still running
+        
+        if(sockSending != null)sockSending.Close();//after we call on destory our loop is still running
+       if(sockReceive!=null) sockReceive.Close();
     }
 }

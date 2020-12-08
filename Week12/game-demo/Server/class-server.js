@@ -5,9 +5,12 @@ const Game = require("./class-game.js").Game;
 //exports keyword stores server object in this class and allows us to use it in other files
 exports.Server = class Server {
 	constructor(){
+		//start listening:
+		this.port = 319; //server listens here
 
+		this.serverName = "AndrewsServer";//this value is hardcoded for now but should give people ability to create own server
 		this.clients = [];
-
+		this.timeUntillNextbroadcast = 0;
 		//create socket:
 		this.sock = require("dgram").createSocket("udp4");
 
@@ -15,12 +18,12 @@ exports.Server = class Server {
 		this.sock.on("error", (e)=>this.onError(e));
 
 		this.sock.on("listening", ()=>this.onStartListen());
-		this.game = new Game(this);
+		
 		//this.game.spawnObject( new Pawn());
 		this.sock.on("message", (msg, rinfo)=>this.onPacket(msg, rinfo));
-		//start listening:
-		this.port = 320;
 		this.sock.bind(this.port);
+		this.game = new Game(this);
+		
 
 	}//end of constructor
 	onError(e){
@@ -119,12 +122,34 @@ exports.Server = class Server {
 
 	}//End of broadcast
 	sendPacketToClient(packet, client){
-		this.sock.send(packet, 0, packet.length, client.rinfo.port, client.rinfo.address, ()=>{} );
+		this.sock.send(packet, 0, packet.length, 321, client.rinfo.address, ()=>{} );
+	}
+	broadcastPacket(packet){
+		const clientListenPort = 321;
+		this.sock.send(packet, 0, packet.length, clientListenPort, undefined);
 	} 
+	broadcastServerHost(){
+		const nameLength = this.serverName.length;
+
+		const packet = Buffer.alloc(7+nameLength);
+		packet.write("HOST", 0);
+		packet.writeUInt16BE(this.port, 4);
+		packet.writeUInt8(nameLength, 6);
+		packet.write(this.serverName, 7);
+		//const addr = this.sock.address();
+		//console.log(addr);
+		this.broadcastPacket(packet);
+		console.log("broadcast packet");
+	}
 	update(game){
 		// check clients for disconnects, etc.
 		for(let key in this.clients){
 			this.clients[key].update(game);
+		}
+		this.timeUntillNextbroadcast -= game.dt;
+		if(this.timeUntillNextbroadcast <= 0){
+			this.timeUntillNextbroadcast = 1.5;
+			this.broadcastServerHost();
 		}
 	}
 }//End of server class
